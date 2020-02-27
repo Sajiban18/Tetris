@@ -39,11 +39,10 @@ int rotate(int x, int y, int rotation) {
 }
 
 bool doesTetrominoFit(int tetrominoId, int rotation, int x, int y) {
-    for(int xx = 0; xx < 4; xx++)
+    for(int xx = 0; xx < 4; xx++) {
         for(int yy = 0; yy < 4; yy++) {
             // Tetromino Index
             int pieceIndex = rotate(x, y, rotation);
-
             int fieldIndex = x + xx + (fieldWidth * (y + yy));
 
             if((x + xx) >= 0 && (x + xx) < fieldWidth) {
@@ -54,7 +53,7 @@ bool doesTetrominoFit(int tetrominoId, int rotation, int x, int y) {
             }
 
         }
-
+    }
     return true;
 }
 
@@ -96,10 +95,10 @@ int main() {
     tetromino[6].append(L".X..");
     
     playField = new unsigned char[fieldWidth * fieldHeight];
-    for(int x = 0; x < fieldWidth; x++)
+    for(int x = 0; x < fieldWidth; x++) {
         for(int y = 0; y < fieldHeight; y++)
             playField[x + (y * fieldWidth)] = (x == 0 || x == fieldWidth - 1 || y == fieldHeight - 1) ? 9 : 0;
-
+    }
 
     wchar_t *screen = new wchar_t [screenWidth * screenHeight];
     for(int i = 0; i < screenWidth * screenHeight; i++)
@@ -111,6 +110,7 @@ int main() {
 
     // Game Loop
     bool gameOver = false;
+
 
     int currentPiece = 0;
     int currentRotation = 0;
@@ -124,6 +124,10 @@ int main() {
     int speed = 20;
     int speedCounter = 0;
     bool keyForceDown = false;
+    int tetrominoCount = 0;
+    int playerScore = 0;
+
+    vector<int> linesExist;
 
     while(!gameOver) {
         
@@ -170,12 +174,41 @@ int main() {
             else {
 
                 // Save the current Tetromino in the playing field
-                for(int x = 0; x < 4; x++) 
-                    for(int y = 0; y < 4; y++)
+                for(int x = 0; x < 4; x++) {
+                    for(int y = 0; y < 4; y++) {
                         if(tetromino[currentPiece][rotate(x, y, currentRotation)] == L'X')
                             playField[(xCurrent + x) + fieldWidth * (yCurrent + y)] = currentPiece + 1;
+                    }
+                }
 
+                tetrominoCount++;
+                if((tetrominoCount % 15) == 0) {
+                    if(speed >= 10)
+                        speed--;
+                }
 
+                // Tetris line detection
+                for(int y = 0; y < 4; y++) {
+                    if((yCurrent + y) < (fieldHeight - 1)) {
+                        bool isLine = true;
+                        for(int x = 1; x < fieldWidth - 1; x++)
+                            isLine &= (playField[(yCurrent + y) * fieldWidth + x]) != 0;
+                        
+                        // If the above check proves Tetris line is still there
+                        if(isLine) {
+                            for(int x = 1; x < fieldWidth - 1; x++)
+                                playField[x + fieldWidth*(yCurrent + y)] = 8;
+                            
+                            linesExist.push_back(yCurrent + y);
+                        }
+                    }
+                }
+
+                // Scoring
+                playerScore += 25;
+                if(!linesExist.empty())
+                    // Expentional score for lines as more risk is taken 
+                    playerScore += (1 << linesExist.size()) * 100; 
 
 
                 // Next random Tetromino position
@@ -187,34 +220,52 @@ int main() {
                 // If Tetromino does not fit
                 gameOver = !doesTetrominoFit(currentPiece, currentRotation, xCurrent, yCurrent);
             }
-
+            speedCounter = 0;
         }
 
         // Render Output 
 
         
         // Display Field 
-        for(int x = 0; x < fieldWidth; x++)
+        for(int x = 0; x < fieldWidth; x++) {
             for(int y = 0; y < fieldHeight; y++)
                 screen[(y + 2) * screenWidth + (x + 2)] = L" ABCDEFG=#"[playField[(y * fieldWidth) + x]];
+        }
 
         // Display Current Piece
-        for(int x = 0; x < 4; x++)
+        for(int x = 0; x < 4; x++) {
             for(int y = 0; y < 4; y++) {
                 if(tetromino[currentPiece][rotate(x, y, currentRotation)] == L'X')
                     // 65 in ASCII gives A
                     screen[(xCurrent + x + 2) + ((yCurrent + y + 2) * screenWidth)] = currentPiece + 65;
             }
-        
+        }
+
+        // Display Score
+        swprintf_s(&screen[(2 * screenWidth) + fieldWidth + 6], 16, L"SCORE: %8d", playerScore);
+
+        if(!linesExist.empty()) {
+            WriteConsoleOutputCharacterW(console, screen, screenWidth * screenHeight, { 0,0 }, &dwBytesWritten);
+            this_thread::sleep_for(400ms);
+
+            // Move down all lines if a Tetris is true
+            for(auto &l : linesExist) {
+                for(int x = 1; x < fieldWidth - 1; x++) {
+                    for(int y = l; y > 0; y--)
+                        playField[x + (fieldWidth * y)] = playField[x + (fieldWidth * (y - 1))];
+                    playField[x] = 0;
+                }
+            }
+        }
 
         // Display
         WriteConsoleOutputCharacterW(console, screen, screenWidth * screenHeight, { 0,0 }, &dwBytesWritten);
     } 
     
-
-    std::cout << "Hellow" << std::endl;
+    // Game Over
+    CloseHandle(console);
+    cout << "Game Over! You Scored: " << playerScore << endl;
+    system("pause");
     
-
-
     return 0;
 }
