@@ -1,27 +1,16 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <cstdlib>
 
 using namespace std;
 
 #include <Windows.h>
 #include <stdio.h>
 #include <wincon.h>
-
-// Shapes of tetrominoes I, O, T, J, L, S and Z
-wstring tetromino[7];
-
-// Playing Field
-int fieldWidth = 12;
-int fieldHeight = 18;
-
-// Field Elements
-unsigned char *playField = nullptr;
-
-// Console Screen
-int screenWidth = 80;
-int screenHeight = 30;
-
+#include <winuser.h>
+#include <stdlib.h>
+#include "tetris.h"
 
 int rotate(int x, int y, int rotation) {
     switch(rotation % 4) {
@@ -51,7 +40,6 @@ bool doesTetrominoFit(int tetrominoId, int rotation, int x, int y) {
                         return false;
                 } 
             }
-
         }
     }
     return true;
@@ -59,40 +47,7 @@ bool doesTetrominoFit(int tetrominoId, int rotation, int x, int y) {
 
 
 int main() {
-    tetromino[0].append(L"..X.");
-    tetromino[0].append(L"..X.");
-    tetromino[0].append(L"..X.");
-    tetromino[0].append(L"..X.");
-
-    tetromino[1].append(L"..X.");
-    tetromino[1].append(L".XX.");
-    tetromino[1].append(L".X..");
-    tetromino[1].append(L"....");
-
-    tetromino[2].append(L".X..");
-    tetromino[2].append(L".XX.");
-    tetromino[2].append(L"..X.");
-    tetromino[2].append(L"....");
-
-    tetromino[3].append(L"....");
-    tetromino[3].append(L".XX.");
-    tetromino[3].append(L".XX.");
-    tetromino[3].append(L"....");
-
-    tetromino[4].append(L"..X.");
-    tetromino[4].append(L".XX.");
-    tetromino[4].append(L"..X.");
-    tetromino[4].append(L"....");
-
-    tetromino[5].append(L"....");
-    tetromino[5].append(L".XX.");
-    tetromino[5].append(L"..X.");
-    tetromino[5].append(L"..X.");
-
-    tetromino[6].append(L"....");
-    tetromino[6].append(L".XX.");
-    tetromino[6].append(L".X..");
-    tetromino[6].append(L".X..");
+    setTetromino();
     
     playField = new unsigned char[fieldWidth * fieldHeight];
     for(int x = 0; x < fieldWidth; x++) {
@@ -110,7 +65,6 @@ int main() {
 
     // Game Loop
     bool gameOver = false;
-
 
     int currentPiece = 0;
     int currentRotation = 0;
@@ -132,11 +86,9 @@ int main() {
     while(!gameOver) {
         
         // Play Time
-        this_thread::sleep_for(50ms);
+        //this_thread::sleep_for(50ms);
         speedCounter++;
         keyForceDown = (speedCounter == speed);
-
-
 
         // Input 
         for(int i = 0; i < 4; i++)
