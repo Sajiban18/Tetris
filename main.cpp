@@ -10,6 +10,7 @@ using namespace std;
 #include <wincon.h>
 #include <winuser.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include "tetris.h"
 
 int rotate(int x, int y, int rotation) {
@@ -86,7 +87,9 @@ int main() {
     while(!gameOver) {
         
         // Play Time
-        //this_thread::sleep_for(50ms);
+        // Delay
+        std::this_thread::sleep_for(50ms);
+
         speedCounter++;
         keyForceDown = (speedCounter == speed);
 
@@ -194,11 +197,11 @@ int main() {
         }
 
         // Display Score
-        swprintf_s(&screen[(2 * screenWidth) + fieldWidth + 6], 16, L"SCORE: %8d", playerScore);
-
+        snwprintf(&screen[(2 * screenWidth) + fieldWidth + 6], 16, L"SCORE: %8d", playerScore);
         if(!linesExist.empty()) {
             WriteConsoleOutputCharacterW(console, screen, screenWidth * screenHeight, { 0,0 }, &dwBytesWritten);
-            this_thread::sleep_for(400ms);
+            // Delay
+            std::this_thread::sleep_for(400ms);
 
             // Move down all lines if a Tetris is true
             for(auto &l : linesExist) {

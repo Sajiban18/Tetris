@@ -20,6 +20,8 @@ unsigned char *playField = nullptr;
 int screenWidth = 80;
 int screenHeight = 30;
 
+wstring tetromino[7];
+
 void setTetromino() {
     tetromino[0].append(L"..X.");
     tetromino[0].append(L"..X.");
